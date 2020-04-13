@@ -4,62 +4,6 @@ var shadowOffset = 20;
 var tween = null;
 var blockSnapSize = 30;
 
-var shadowRectangle = new Konva.Rect({
-  x: 0,
-  y: 0,
-  width: blockSnapSize * 6,
-  height: blockSnapSize * 3,
-  fill: '#FF7B17',
-  opacity: 0.6,
-  stroke: '#CF6412',
-  strokeWidth: 3,
-  dash: [20, 2]
-});
-
-function newRectangle(x, y, layer, stage) {
-  let rectangle = new Konva.Rect({
-    x: x,
-    y: y,
-    width: blockSnapSize * 6,
-    height: blockSnapSize * 3,
-    fill: '#fff',
-    stroke: '#ddd',
-    strokeWidth: 1,
-    shadowColor: 'black',
-    shadowBlur: 2,
-    shadowOffset: {x : 1, y : 1},
-    shadowOpacity: 0.4,
-    draggable: true 
-  });
-  rectangle.on('dragstart', (e) => {
-    shadowRectangle.show();
-    shadowRectangle.moveToTop();
-    rectangle.moveToTop();
-  });
-  rectangle.on('dragend', (e) => {
-    rectangle.position({
-      x: Math.round(rectangle.x() / blockSnapSize) * blockSnapSize,
-      y: Math.round(rectangle.y() / blockSnapSize) * blockSnapSize
-    });
-    stage.batchDraw();
-    shadowRectangle.hide();
-  });
-  rectangle.on('dragmove', (e) => {
-    shadowRectangle.position({
-      x: Math.round(rectangle.x() / blockSnapSize) * blockSnapSize,
-      y: Math.round(rectangle.y() / blockSnapSize) * blockSnapSize
-    });
-    stage.batchDraw();
-  });
-  layer.add(rectangle);
-}
-
-var stage = new Konva.Stage({
-  container: 'container',
-  width: width,
-  height: height
-});
-
 var gridLayer = new Konva.Layer();
 var padding = blockSnapSize;
 console.log(width, padding, width / padding);
@@ -79,26 +23,92 @@ for (var j = 0; j < height / padding; j++) {
     strokeWidth: 0.5,
   }));
 }
+  
+var stage = new Konva.Stage({
+    container: 'container',
+    width: width,
+    height: height
+});
 
 var layer = new Konva.Layer();
-
-shadowRectangle.hide();
-
-layer.add(shadowRectangle);
-
-newRectangle(blockSnapSize * 3, blockSnapSize * 3, layer, stage);
-newRectangle(blockSnapSize * 10, blockSnapSize * 3, layer, stage);
 
 stage.add(gridLayer);
 stage.add(layer);
 
+function newRoom(x, y) {
+    
+    var group = new Konva.Group({
+        x: x,
+        y: y,
+        draggable: true
+    });
+
+    var rectangle = new Konva.Rect({
+        x: x,
+        y: y,
+        width: blockSnapSize * 6,
+        height: blockSnapSize * 3,
+        fill: 'gray',
+        stroke: '#ddd',
+        strokeWidth: 1,
+        shadowColor: 'black',
+        shadowBlur: 2,
+        shadowOffset: {x : 1, y : 1},
+        shadowOpacity: 0.4,
+        name: 'fillShape'
+    });
+    group.add(rectangle);
+
+    group.on('dragstart', (e) => {
+        group.moveToTop();
+    })
+
+    group.on('dragend', (e) => {
+        group.position({
+            x: Math.round(group.x() / blockSnapSize) * blockSnapSize,
+            y: Math.round(group.y() / blockSnapSize) * blockSnapSize
+        });
+        stage.batchDraw();
+    });
+
+  return group;
+}
+
+function addRoom() {
+    layer.add(newRoom(blockSnapSize * 3, blockSnapSize * 3));
+    layer.draw();
+  }
+
+  
 
 document.getElementById('button').addEventListener('click', addRoom);
 //addRoom();
 
-function addRoom() {
-    newRectangle(blockSnapSize * 3, blockSnapSize * 8, layer, stage);
-    // force update manually
-    // tr.forceUpdate();
-    layer.draw();
-  }
+layer.on('dragmove', function(e) {
+
+    var target = e.target;
+    var targetRect = e.target.getClientRect();
+    layer.children.each(function(group) {
+        // do not check intersection with itself
+        if (group === target) {
+        return;
+        }
+        if (haveIntersection(group.getClientRect(), targetRect)) {
+        group.findOne('.fillShape').fill('red');
+        } else {
+        group.findOne('.fillShape').fill('gray');
+        }
+        // do not need to call layer.draw() here
+        // because it will be called by dragmove action
+    });
+});
+
+function haveIntersection(r1, r2) {
+    return !(
+        r2.x > r1.x + r1.width ||
+        r2.x + r2.width < r1.x ||
+        r2.y > r1.y + r1.height ||
+        r2.y + r2.height < r1.y
+    );
+}
+  
