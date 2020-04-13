@@ -29,7 +29,7 @@ function newRectangle(x, y, layer, stage) {
     shadowBlur: 2,
     shadowOffset: {x : 1, y : 1},
     shadowOpacity: 0.4,
-    draggable: true
+    draggable: true 
   });
   rectangle.on('dragstart', (e) => {
     shadowRectangle.show();
@@ -81,10 +81,24 @@ for (var j = 0; j < height / padding; j++) {
 }
 
 var layer = new Konva.Layer();
+
 shadowRectangle.hide();
+
 layer.add(shadowRectangle);
+
 newRectangle(blockSnapSize * 3, blockSnapSize * 3, layer, stage);
 newRectangle(blockSnapSize * 10, blockSnapSize * 3, layer, stage);
 
 stage.add(gridLayer);
 stage.add(layer);
+
+
+document.getElementById('button').addEventListener('click', addRoom);
+//addRoom();
+
+function addRoom() {
+    newRectangle(blockSnapSize * 3, blockSnapSize * 8, layer, stage);
+    // force update manually
+    // tr.forceUpdate();
+    layer.draw();
+  }
